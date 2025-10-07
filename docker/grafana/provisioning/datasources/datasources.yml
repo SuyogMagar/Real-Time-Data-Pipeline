@@ -15,3 +15,20 @@ datasources:
       cacheLevel: 'High'
       disableRecordingRules: false
       incrementalQueryOverlapWindow: 10m
+      
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    database: realtimedb
+    user: postgres
+    secureJsonData:
+      password: suyoghkm
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 100
+      maxIdleConns: 100
+      connMaxLifetime: 14400
+      postgresVersion: 1500
+      timescaledb: false
+    editable: false

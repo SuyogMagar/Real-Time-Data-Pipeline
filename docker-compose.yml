@@ -122,7 +122,7 @@ services:
     volumes:
       - grafana-data:/var/lib/grafana
       - ./docker/grafana/provisioning:/etc/grafana/provisioning
-      - ./docker/grafana/dashboards:/var/lib/grafana/dashboards
+      - ./docker/grafana/dashboards:/etc/grafana/provisioning/dashboards
     networks:
       - kafka-network
     healthcheck:

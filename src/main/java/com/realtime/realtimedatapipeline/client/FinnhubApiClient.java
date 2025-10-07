@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.util.retry.Retry;
 
 import java.time.Duration;
@@ -99,6 +98,7 @@ public class FinnhubApiClient {
         try {
             logger.debug("Fetching company profile for symbol: {}", symbol);
             
+            @SuppressWarnings("unchecked")
             Map<String, Object> profile = webClient.get()
                     .uri(uriBuilder -> uriBuilder
                             .path("/stock/profile2")

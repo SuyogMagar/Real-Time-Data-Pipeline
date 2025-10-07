@@ -2,6 +2,7 @@ package com.realtime.realtimedatapipeline.controller;
 
 import com.realtime.realtimedatapipeline.client.FinnhubApiClient;
 import com.realtime.realtimedatapipeline.config.StockProperties;
+import com.realtime.realtimedatapipeline.metrics.StockMetricsService;
 import com.realtime.realtimedatapipeline.producer.StockDataProducer;
 import com.realtime.realtimedatapipeline.scheduler.StockDataScheduler;
 import org.springframework.http.ResponseEntity;
@@ -20,15 +21,18 @@ public class StockDataController {
     private final StockDataProducer stockDataProducer;
     private final FinnhubApiClient finnhubApiClient;
     private final StockProperties stockProperties;
+    private final StockMetricsService stockMetricsService;
     
     public StockDataController(StockDataScheduler stockDataScheduler,
                               StockDataProducer stockDataProducer,
                               FinnhubApiClient finnhubApiClient,
-                              StockProperties stockProperties) {
+                              StockProperties stockProperties,
+                              StockMetricsService stockMetricsService) {
         this.stockDataScheduler = stockDataScheduler;
         this.stockDataProducer = stockDataProducer;
         this.finnhubApiClient = finnhubApiClient;
         this.stockProperties = stockProperties;
+        this.stockMetricsService = stockMetricsService;
     }
     
     /**
@@ -106,5 +110,21 @@ public class StockDataController {
                 "updateInterval", stockProperties.getUpdateInterval().toString()
             )
         ));
+    }
+    
+    /**
+     * Get stock metrics summary
+     */
+    @GetMapping("/metrics")
+    public ResponseEntity<Map<String, Object>> getStockMetrics() {
+        return ResponseEntity.ok(stockMetricsService.getMetricsSummary());
+    }
+    
+    /**
+     * Get metrics for a specific symbol
+     */
+    @GetMapping("/metrics/{symbol}")
+    public ResponseEntity<Map<String, Object>> getSymbolMetrics(@PathVariable String symbol) {
+        return ResponseEntity.ok(stockMetricsService.getSymbolMetrics(symbol.toUpperCase()));
     }
 }

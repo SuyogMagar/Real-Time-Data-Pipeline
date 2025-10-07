@@ -2,27 +2,27 @@ spring:
   application:
     name: real-time-data-pipeline
   
-  # Database Configuration - Disabled for now
-  # datasource:
-  #   url: jdbc:postgresql://localhost:5432/realtimedb
-  #   username: rtuser
-  #   password: rtpassword
-  #   driver-class-name: org.postgresql.Driver
-  #   hikari:
-  #     maximum-pool-size: 20
-  #     minimum-idle: 5
-  #     idle-timeout: 300000
-  #     connection-timeout: 20000
+  # Database Configuration
+  datasource:
+    url: jdbc:postgresql://localhost:5432/realtimedb
+    username: postgres
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 20
+      minimum-idle: 5
+      idle-timeout: 300000
+      connection-timeout: 20000
 
-  # JPA Configuration - Disabled for now
-  # jpa:
-  #   hibernate:
-  #     ddl-auto: update
-  #   show-sql: false
-  #   properties:
-  #     hibernate:
-  #       dialect: org.hibernate.dialect.PostgreSQLDialect
-  #       format_sql: true
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
   #   database-platform: org.hibernate.dialect.PostgreSQLDialect
 
   # Kafka Configuration
@@ -92,7 +92,7 @@ logging:
 app:
   # Finnhub API Configuration
   finnhub:
-    api-key: ${FINNHUB_API_KEY:your-api-key-here}
+    api-key: ${FINNHUB_API_KEY:demo-key}
     base-url: https://finnhub.io/api/v1
     timeout: 30s
     
@@ -112,7 +112,7 @@ app:
   # Kafka Topics
   kafka:
     topics:
-      stock-quotes-raw: stock-quotes-raw
+      stock-quotes-raw: stock-quotes
       stock-quotes-processed: stock-quotes-processed
       stock-alerts: stock-alerts
       stock-analytics: stock-analytics

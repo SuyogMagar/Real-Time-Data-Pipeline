@@ -1,9 +1,9 @@
 package com.realtime.realtimedatapipeline.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-// import jakarta.persistence.*;
-// import jakarta.validation.constraints.NotBlank;
-// import jakarta.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -12,28 +12,27 @@ import java.util.UUID;
  * Domain model for stock quote events
  * Used for Kafka messaging and database persistence
  */
-// @Entity
-// @Table(name = "stock_quotes", schema = "events")
-// @NamedQuery(
-//     name = "StockQuoteEvent.findRecentBySymbol",
-//     query = "SELECT s FROM StockQuoteEvent s WHERE s.symbol = :symbol ORDER BY s.timestamp DESC"
-// )
+@Entity
+@Table(name = "stock_quotes")
+@NamedQuery(
+    name = "StockQuoteEvent.findRecentBySymbol",
+    query = "SELECT s FROM StockQuoteEvent s WHERE s.symbol = :symbol ORDER BY s.timestamp DESC"
+)
 public class StockQuoteEvent {
     
-    // @Id
-    // @GeneratedValue(strategy = GenerationType.UUID)
+    @Id
     private UUID id;
     
-    // @NotBlank
-    // @Column(name = "symbol", nullable = false, length = 10)
+    @NotBlank
+    @Column(name = "symbol", nullable = false, length = 10)
     private String symbol;
     
-    // @NotBlank
-    // @Column(name = "stock_name", nullable = false, length = 100)
+    @NotBlank
+    @Column(name = "stock_name", nullable = false, length = 100)
     private String stockName;
     
-    // @NotNull
-    // @Column(name = "current_price", nullable = false)
+    @NotNull
+    @Column(name = "current_price", nullable = false)
     private Double currentPrice;
     private Double percentChange;
     private Double changeAmount;
@@ -51,6 +50,7 @@ public class StockQuoteEvent {
     
     // Constructors
     public StockQuoteEvent() {
+        this.id = UUID.randomUUID();
         this.createdAt = LocalDateTime.now();
     }
     

@@ -1,0 +1,231 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "Real-Time Stock Data Pipeline Dashboard",
+    "tags": ["stock", "real-time", "kafka", "spring-boot"],
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Current Stock Prices",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "stock_price",
+            "legendFormat": "{{symbol}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD",
+            "decimals": 2
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0}
+      },
+      {
+        "id": 2,
+        "title": "Price Change %",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "stock_price_change",
+            "legendFormat": "{{symbol}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "decimals": 2,
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": -5},
+                {"color": "yellow", "value": -2},
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 2},
+                {"color": "red", "value": 5}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0}
+      },
+      {
+        "id": 3,
+        "title": "Stock Price History",
+        "type": "timeseries",
+        "targets": [
+          {
+            "rawSql": "SELECT timestamp as time, symbol, current_price FROM stock_quotes WHERE $__timeFilter(timestamp) ORDER BY timestamp",
+            "format": "time_series",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "currencyUSD"
+          }
+        },
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 8}
+      },
+      {
+        "id": 4,
+        "title": "Kafka Events Rate",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(stock_events_consumed_total[5m])",
+            "legendFormat": "Consumed/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(stock_events_persisted_total[5m])",
+            "legendFormat": "Persisted/sec",
+            "refId": "B"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16}
+      },
+      {
+        "id": 5,
+        "title": "Database Records",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "stock_database_records_total",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "short"
+          }
+        },
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16}
+      },
+      {
+        "id": 6,
+        "title": "API Success Rate",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "finnhub_api_success_total / (finnhub_api_success_total + finnhub_api_errors_total) * 100",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "percent",
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "steps": [
+                {"color": "red", "value": 0},
+                {"color": "yellow", "value": 80},
+                {"color": "green", "value": 95}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 0, "y": 24}
+      },
+      {
+        "id": 7,
+        "title": "JVM Memory",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+            "legendFormat": "Heap Used",
+            "refId": "A"
+          },
+          {
+            "expr": "jvm_memory_max_bytes{area=\"heap\"}",
+            "legendFormat": "Heap Max",
+            "refId": "B"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "bytes"
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 6, "y": 24}
+      },
+      {
+        "id": 8,
+        "title": "Price Alerts",
+        "type": "timeseries",
+        "targets": [
+          {
+            "expr": "rate(stock_price_alerts_total[5m])",
+            "legendFormat": "{{symbol}} {{direction}}",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 4, "w": 6, "x": 12, "y": 24}
+      },
+      {
+        "id": 9,
+        "title": "Data Freshness",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "stock_data_freshness_minutes",
+            "legendFormat": "{{symbol}}",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "unit": "m",
+            "thresholds": {
+              "steps": [
+                {"color": "green", "value": 0},
+                {"color": "yellow", "value": 2},
+                {"color": "red", "value": 5}
+              ]
+            }
+          }
+        },
+        "gridPos": {"h": 4, "w": 6, "x": 18, "y": 24}
+      },
+      {
+        "id": 10,
+        "title": "Top Movers",
+        "type": "table",
+        "targets": [
+          {
+            "rawSql": "SELECT symbol, current_price, percent_change, change_amount FROM stock_quotes sq1 WHERE timestamp = (SELECT MAX(timestamp) FROM stock_quotes sq2 WHERE sq2.symbol = sq1.symbol) ORDER BY ABS(percent_change) DESC LIMIT 10",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 28}
+      },
+      {
+        "id": 11,
+        "title": "Volume Leaders",
+        "type": "table",
+        "targets": [
+          {
+            "rawSql": "SELECT symbol, current_price, volume FROM stock_quotes sq1 WHERE timestamp = (SELECT MAX(timestamp) FROM stock_quotes sq2 WHERE sq2.symbol = sq1.symbol) ORDER BY volume DESC LIMIT 10",
+            "format": "table",
+            "refId": "A"
+          }
+        ],
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 28}
+      }
+    ],
+    "time": {
+      "from": "now-1h",
+      "to": "now"
+    },
+    "refresh": "10s",
+    "schemaVersion": 27,
+    "version": 0,
+    "links": []
+  }
+}

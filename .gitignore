@@ -31,3 +31,18 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Security ###
+.env
+*.key
+*.pem
+**/secrets/
+application-local.yml
+application-dev.yml
+
+### Docker ###
+.docker/
+
+### Logs ###
+*.log
+logs/
