@@ -1,0 +1,220 @@
+================================================================================
+📈 REAL-TIME STOCK DATA PIPELINE - SYSTEM ANALYSIS & RUNNING GUIDE
+================================================================================
+
+This document provides a comprehensive analysis, architectural breakdown, and
+step-by-step setup instructions for the Real-Time Data Pipeline project.
+
+--------------------------------------------------------------------------------
+1. PROJECT OVERVIEW & VALUE PROPOSITION
+--------------------------------------------------------------------------------
+The "Real-Time Stock Data Pipeline" is a production-ready, event-driven
+microservices architecture built with Java 21 and Spring Boot 3.5.6. It is
+designed to fetch, stream, process, cache, persist, and monitor live stock
+market data with sub-second latency (< 500ms end-to-end) and high throughput
+(1,000+ events per minute).
+
+This project demonstrates enterprise-level software engineering patterns,
+including:
+* Event-Driven Architecture (EDA) using Apache Kafka.
+* Microservices decoupled orchestration.
+* Real-time metrics collection, storage, and visualization (Observability).
+* Highly-scalable relational and key-value persistence.
+* Containerized multi-service infrastructure deployment via Docker Compose.
+
+--------------------------------------------------------------------------------
+2. SYSTEM ARCHITECTURE & DATA FLOW
+--------------------------------------------------------------------------------
+The system is divided into decoupled components that handle individual parts
+of the pipeline:
+
+[Finnhub API] (Ext. Stock Market Provider)
+     │
+     ▼ (HTTP GET /every 10s)
+[Spring Boot Scheduler (StockDataScheduler)]
+     │
+     ▼ (Produces Quote Object)
+[Kafka Producer (StockDataProducer)]
+     │
+     ▼ (Publishes to 'stock-quotes' Topic)
+[Apache Kafka Message Broker]
+     │
+     ├─► [Kafka Consumer (StockQuoteConsumer)] ──► [PostgreSQL Database]
+     │                                         ──► [Redis Cache]
+     │
+     ▼ (Prometheus Scrapes Metrics)
+[Micrometer / Actuator Metrics Endpoint (/actuator/prometheus)]
+     │
+     ▼
+[Prometheus TSDB] ──► [Grafana Dashboard] (Visualizations & Monitoring)
+
+Data Flow Walkthrough:
+1. Ingestion: A Spring scheduler triggers every 10 seconds, requesting the
+   latest quotes for a configured list of stock symbols (e.g. AAPL, GOOGL,
+   MSFT, TSLA, AMZN, META, NFLX, NVDA) from the external Finnhub API.
+2. Messaging: The scheduler routes the response data to the Kafka Producer
+   which publishes events into the Kafka message broker under the topic
+   'stock-quotes'.
+3. Processing & Persistence: Decoupled Kafka Consumers read from this topic.
+   They parse the quotes, check against business logic (e.g., price movements
+   exceeding 5% threshold alert trigger), and persist records in PostgreSQL
+   and cache status in Redis.
+4. Metrics & Observability: The application exposes system metrics using
+   Micrometer and Spring Boot Actuator. Prometheus scrapes this data, and
+   Grafana connects to Prometheus to render real-time performance graphs and
+   dashboards.
+
+--------------------------------------------------------------------------------
+3. TECHNOLOGY STACK
+--------------------------------------------------------------------------------
+The project leverages a modern, robust, and industry-standard technology stack:
+
+* Backend Core: Java 21 & Spring Boot 3.5.6
+* Framework Modules: Spring Kafka, Spring Data JPA, Spring WebFlux (for reactive client)
+* Message Broker: Apache Kafka 7.4.0 (Confluent distribution) with Zookeeper
+* Caching Layer: Redis 7 (Alpine Linux image)
+* Primary Database: PostgreSQL 15 (Alpine Linux image)
+* Metrics & Alerts: Prometheus (v2.45.0) & Micrometer
+* Visualization: Grafana (v10.0.0)
+* Tooling & DevOps: Docker, Docker Compose, Maven (mvnw build wrapper)
+
+--------------------------------------------------------------------------------
+4. PREREQUISITES & SYSTEM REQUIREMENTS
+--------------------------------------------------------------------------------
+Before starting, ensure your local development system meets these requirements:
+
+1. Java Development Kit (JDK): Version 21 or higher installed.
+2. Docker & Docker Compose: Docker Desktop or engine installed and running.
+   * Recommendation: Allocate at least 4GB of RAM in Docker settings to run all 
+     infrastructure components comfortably.
+3. Ports availability: Ensure the following local ports are not currently 
+   in use by other programs:
+   * 8090 - Spring Boot REST API Application
+   * 8080 - Kafka UI Dashboard
+   * 9092 - Kafka Broker connection
+   * 2181 - Zookeeper
+   * 5432 - PostgreSQL Database
+   * 6379 - Redis Caching
+   * 9090 - Prometheus Metrics Server
+   * 3000 - Grafana Dashboard
+4. Finnhub API Key: Get a free developer API key by registering at
+   https://finnhub.io/register
+
+--------------------------------------------------------------------------------
+5. STEP-BY-STEP SETUP & RUNNING INSTRUCTIONS
+================================================================================
+
+STEP 1: ENVIRONMENT SETUP
+-------------------------
+1. In the root directory of the project, locate '.env.example'.
+2. Copy or rename this file to '.env':
+   $ cp .env.example .env
+3. Open '.env' and populate your secrets:
+   * Set 'FINNHUB_API_KEY' to your actual key from Finnhub.
+   * Set 'DATABASE_PASSWORD' to your preferred database password (e.g., 'suyoghkm' 
+     or custom).
+
+STEP 2: START THE INFRASTRUCTURE (DOCKER)
+-----------------------------------------
+1. Open a terminal in the root directory of the project.
+2. Launch all containerized services in background (detached) mode:
+   $ docker-compose up -d
+3. Wait about 30 seconds for services to fully initialize, then verify their
+   status:
+   $ docker-compose ps
+   All containers (postgres, redis, kafka, zookeeper, kafka-ui, prometheus, 
+   grafana) should show 'Up' or 'Up (healthy)'.
+
+STEP 3: RUN THE SPRING BOOT APPLICATION
+---------------------------------------
+1. Export environment variables in your active terminal session so the Spring 
+   application can pick them up:
+   
+   On Linux/macOS:
+   $ export FINNHUB_API_KEY="your-actual-api-key"
+   $ export DATABASE_PASSWORD="postgres"  # Matches default in application.yml
+
+   On Windows (PowerShell):
+   $ $env:FINNHUB_API_KEY="your-actual-api-key"
+   $ $env:DATABASE_PASSWORD="postgres"
+
+2. Start the Spring Boot application using the Maven wrapper:
+   $ ./mvnw spring-boot:run
+   
+   (On Windows PowerShell, use: .\mvnw.cmd spring-boot:run)
+
+3. Watch the console logs. The application should start up successfully on 
+   port 8090 and begin connecting to Kafka, Redis, and PostgreSQL.
+
+--------------------------------------------------------------------------------
+6. VERIFICATION & DASHBOARDS
+================================================================================
+
+Once both Docker containers and the Spring Boot application are running,
+you can verify the complete health and behavior of the system:
+
+A. HEALTH CHECK (REST API)
+   * System Health Status:
+     http://localhost:8090/actuator/health
+     Expected response: {"status":"UP"}
+     
+   * Complete Pipeline Metrics & Configurations:
+     http://localhost:8090/api/stocks/status
+     Provides comprehensive stats on Scheduler, Kafka Producer, API calls,
+     and symbols configuration.
+
+   * Get Configured Symbols:
+     http://localhost:8090/api/stocks/symbols
+
+   * Trigger Manual Fetch:
+     $ curl -X POST http://localhost:8090/api/stocks/fetch
+
+B. MANAGEMENT & MONITORING DASHBOARDS
+   * Kafka UI (Topic & Messages Explorer):
+     http://localhost:8080
+     Allows you to view all created topics ('stock-quotes', 'stock-quotes-processed', etc.)
+     and examine live messages flowing through the pipeline.
+     
+   * Grafana Dashboard (Metrics Visualization):
+     http://localhost:3000
+     Log in using:
+     - Username: admin
+     - Password: admin123
+     Pre-configured dashboards are loaded to visualize resource metrics 
+     and application behavior.
+
+   * Prometheus Server:
+     http://localhost:9090
+     Directly inspect scraped timeseries metrics from the application's
+     actuator.
+
+--------------------------------------------------------------------------------
+7. TROUBLESHOOTING COMMON ISSUES
+================================================================================
+
+1. API RATE LIMITS (Finnhub 429 / 401 errors):
+   * Free accounts on Finnhub have strict request limits. If you see high
+     error rates in 'api/stocks/status', it is likely due to rate limits
+     or an expired API key. The system will graceful handle these errors 
+     and retry automatically.
+
+2. PORT CONFLICTS:
+   * If any of the docker containers fail to start with a "port already
+     allocated" message, search for running services (like local Postgres 
+     or Redis) using those ports and stop them first, or change the mapped
+     ports in 'docker-compose.yml'.
+
+3. KAFKA CONNECTION TIMEOUTS:
+   * Ensure Zookeeper is up and healthy before Kafka starts. If Kafka fails,
+     simply restart it using:
+     $ docker-compose restart kafka
+
+4. FRESH START (Reset all stored data):
+   * If you need to wipe out the database and Kafka topics to start fresh:
+     $ docker-compose down -v
+     $ docker-compose up -d
+
+================================================================================
+Document generated on: 2026-05-18
+Built with ❤️ for enterprise-grade real-time pipelines.
+================================================================================
