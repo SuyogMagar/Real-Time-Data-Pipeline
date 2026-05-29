@@ -1,0 +1,51 @@
+PROJECT EXPLANATION
+
+What is this project?
+In the simplest terms, this is a Real-Time Stock Data Pipeline. Think of it as an automated system that constantly monitors stock prices and saves them for you. 
+- It asks the stock market (via Finnhub API) for the latest stock prices every 10 seconds.
+- It sends these new prices into a fast messaging system (Kafka).
+- It then temporarily caches this data into a fast memory cache (Redis) for real-time access.
+- Finally, it keeps an eye on its own health and performance, displaying nice visual graphs (Grafana).
+
+--------------------------------------------------------------------------------
+
+How to Configure and Start the Project:
+
+1. Setup Environment Variables:
+   - Create a copy of the `.env.example` file and name it `.env`.
+   - Open `.env` and add your Finnhub API key (get a free one at finnhub.io).
+
+2. Start Background Services:
+   - Open a terminal in the project folder and run:
+     docker-compose up -d
+   - This starts the messaging system (Kafka) and monitoring dashboards.
+
+3. Start the Main Application:
+   - In your terminal, set your environment variables so the app can see them:
+     export FINNHUB_API_KEY="your-api-key"
+   - Run the Spring Boot application:
+     ./mvnw spring-boot:run
+     (If you are on Windows, use: .\mvnw.cmd spring-boot:run)
+
+--------------------------------------------------------------------------------
+
+How to Verify the Project is Working:
+
+Once everything is running, you can verify it by opening your browser or using `curl`:
+
+1. Application Health:
+   - Visit: http://localhost:8090/actuator/health
+   - You should see a response saying: {"status":"UP"}
+
+2. System Status & Statistics:
+   - Visit: http://localhost:8090/api/stocks/status
+   - This will show you exactly what the pipeline is doing and how many stock prices it has processed.
+
+3. Live Message Flow (Kafka UI):
+   - Visit: http://localhost:8080
+   - Here you can see the internal messages and stock quotes moving through the system in real-time.
+
+4. Visual Monitoring (Grafana):
+   - Visit: http://localhost:3000
+   - Log in with username: admin and password: admin123
+   - You will see graphs showing the performance and metrics of your pipeline.

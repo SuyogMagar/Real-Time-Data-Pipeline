@@ -2,28 +2,7 @@ spring:
   application:
     name: real-time-data-pipeline
   
-  # Database Configuration
-  datasource:
-    url: jdbc:postgresql://localhost:5432/realtimedb
-    username: postgres
-    password: ${DATABASE_PASSWORD:postgres}
-    driver-class-name: org.postgresql.Driver
-    hikari:
-      maximum-pool-size: 20
-      minimum-idle: 5
-      idle-timeout: 300000
-      connection-timeout: 20000
 
-  # JPA Configuration
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-  #   database-platform: org.hibernate.dialect.PostgreSQLDialect
 
   # Kafka Configuration
   kafka:

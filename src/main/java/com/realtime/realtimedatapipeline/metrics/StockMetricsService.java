@@ -1,7 +1,7 @@
 package com.realtime.realtimedatapipeline.metrics;
 
 import com.realtime.realtimedatapipeline.model.StockQuoteEvent;
-import com.realtime.realtimedatapipeline.repository.StockQuoteRepository;
+
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Timer;
 import org.slf4j.Logger;
@@ -20,7 +20,7 @@ public class StockMetricsService {
     
     private static final Logger logger = LoggerFactory.getLogger(StockMetricsService.class);
     
-    private final StockQuoteRepository stockQuoteRepository;
+
     private final MeterRegistry meterRegistry;
     
     // Concurrent maps to store current stock prices and metrics
@@ -29,8 +29,7 @@ public class StockMetricsService {
     private final Map<String, Long> quoteCounts = new ConcurrentHashMap<>();
     private final Map<String, LocalDateTime> lastUpdateTimes = new ConcurrentHashMap<>();
     
-    public StockMetricsService(StockQuoteRepository stockQuoteRepository, MeterRegistry meterRegistry) {
-        this.stockQuoteRepository = stockQuoteRepository;
+    public StockMetricsService(MeterRegistry meterRegistry) {
         this.meterRegistry = meterRegistry;
         registerCustomGauges();
     }
@@ -73,33 +72,7 @@ public class StockMetricsService {
                     symbol, event.getCurrentPrice(), event.getPercentChange());
     }
     
-    /**
-     * Scheduled method to refresh database-based metrics every minute
-     */
-    @Scheduled(fixedRate = 60000) // Every minute
-    public void refreshDatabaseMetrics() {
-        try {
-            logger.debug("Refreshing database-based stock metrics");
-            
-            // Get latest quotes for each symbol from database
-            List<StockQuoteEvent> latestQuotes = stockQuoteRepository.findLatestQuoteForEachSymbol();
-            
-            for (StockQuoteEvent quote : latestQuotes) {
-                updateStockMetrics(quote);
-                
-                // Track database freshness (no gauge registration needed)
-                if (quote.getCreatedAt() != null) {
-                    long minutesAgo = java.time.Duration.between(quote.getCreatedAt(), LocalDateTime.now()).toMinutes();
-                    logger.debug("Data freshness for {}: {} minutes", quote.getSymbol(), minutesAgo);
-                }
-            }
-            
-            logger.debug("Refreshed metrics for {} symbols", latestQuotes.size());
-            
-        } catch (Exception e) {
-            logger.error("Error refreshing database metrics: {}", e.getMessage(), e);
-        }
-    }
+
     
     /**
      * Create metrics for significant price movements (alerts)
@@ -133,8 +106,7 @@ public class StockMetricsService {
                     .collect(Collectors.toMap(
                             Map.Entry::getKey,
                             entry -> entry.getValue().toString()
-                    )),
-            "totalDatabaseRecords", (double) stockQuoteRepository.count()
+                    ))
         );
     }
     

@@ -2,7 +2,7 @@ package com.realtime.realtimedatapipeline.consumer;
 
 import com.realtime.realtimedatapipeline.metrics.StockMetricsService;
 import com.realtime.realtimedatapipeline.model.StockQuoteEvent;
-import com.realtime.realtimedatapipeline.repository.StockQuoteRepository;
+
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
@@ -17,23 +17,19 @@ public class StockQuoteConsumer {
     
     private static final Logger logger = LoggerFactory.getLogger(StockQuoteConsumer.class);
     
-    private final StockQuoteRepository stockQuoteRepository;
+
     private final StockMetricsService metricsService;
     private final Counter consumedEventsCounter;
-    private final Counter persistedEventsCounter;
+
     private final Counter errorCounter;
     
-    public StockQuoteConsumer(StockQuoteRepository stockQuoteRepository, 
-                             StockMetricsService metricsService, 
+    public StockQuoteConsumer(StockMetricsService metricsService, 
                              MeterRegistry meterRegistry) {
-        this.stockQuoteRepository = stockQuoteRepository;
         this.metricsService = metricsService;
         this.consumedEventsCounter = Counter.builder("stock.events.consumed")
                 .description("Number of stock quote events consumed from Kafka")
                 .register(meterRegistry);
-        this.persistedEventsCounter = Counter.builder("stock.events.persisted")
-                .description("Number of stock quote events persisted to database")
-                .register(meterRegistry);
+
         this.errorCounter = Counter.builder("stock.consumer.errors")
                 .description("Number of errors while consuming stock events")
                 .register(meterRegistry);
@@ -61,15 +57,11 @@ public class StockQuoteConsumer {
                     .marketTimestamp(stockQuoteEvent.getMarketTimestamp())
                     .build();
             
-            // Save to database
-            StockQuoteEvent savedEvent = stockQuoteRepository.save(newEvent);
-            persistedEventsCounter.increment();
-            
             // Update metrics
-            metricsService.updateStockMetrics(savedEvent);
+            metricsService.updateStockMetrics(newEvent);
             
-            logger.info("Successfully persisted stock quote for symbol: {} with price: ${:.2f}", 
-                       savedEvent.getSymbol(), savedEvent.getCurrentPrice());
+            logger.info("Successfully processed stock quote for symbol: {} with price: ${:.2f}", 
+                       newEvent.getSymbol(), newEvent.getCurrentPrice());
                        
         } catch (Exception e) {
             logger.error("Error consuming and persisting stock quote event: {}", e.getMessage(), e);
