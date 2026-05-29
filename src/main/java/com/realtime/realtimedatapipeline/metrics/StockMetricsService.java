@@ -42,9 +42,6 @@ public class StockMetricsService {
         logger.info("Stock metrics service initialized");
     }
     
-    /**
-     * Update metrics with new stock quote event
-     */
     public void updateStockMetrics(StockQuoteEvent event) {
         if (event == null || event.getSymbol() == null) {
             return;
@@ -52,21 +49,37 @@ public class StockMetricsService {
         
         String symbol = event.getSymbol();
         
-        // Update current price
+        // Update current price and register gauge
         if (event.getCurrentPrice() != null) {
             currentPrices.put(symbol, event.getCurrentPrice());
+            io.micrometer.core.instrument.Gauge.builder("stock_price", currentPrices, m -> m.getOrDefault(symbol, 0.0))
+                .tag("symbol", symbol)
+                .description("Current stock price")
+                .register(meterRegistry);
         }
         
-        // Update price change
+        // Update price change and register gauge
         if (event.getPercentChange() != null) {
             priceChanges.put(symbol, event.getPercentChange());
+            io.micrometer.core.instrument.Gauge.builder("stock_price_change", priceChanges, m -> m.getOrDefault(symbol, 0.0))
+                .tag("symbol", symbol)
+                .description("Stock price percentage change")
+                .register(meterRegistry);
         }
         
         // Update quote count
         quoteCounts.merge(symbol, 1L, Long::sum);
         
-        // Update last update time
+        // Update last update time and register freshness gauge
         lastUpdateTimes.put(symbol, LocalDateTime.now());
+        io.micrometer.core.instrument.Gauge.builder("stock_data_freshness_minutes", lastUpdateTimes, m -> {
+            LocalDateTime lastUpdate = m.get(symbol);
+            if (lastUpdate == null) return 0.0;
+            return (double) java.time.Duration.between(lastUpdate, LocalDateTime.now()).toMinutes();
+        })
+        .tag("symbol", symbol)
+        .description("Data freshness in minutes")
+        .register(meterRegistry);
         
         logger.debug("Updated metrics for symbol: {} - Price: ${}, Change: {}%", 
                     symbol, event.getCurrentPrice(), event.getPercentChange());
