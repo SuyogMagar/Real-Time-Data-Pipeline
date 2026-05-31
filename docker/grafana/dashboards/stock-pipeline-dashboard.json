@@ -127,28 +127,7 @@
         "y": 16
       }
     },
-    {
-      "id": 5,
-      "title": "Database Records",
-      "type": "stat",
-      "targets": [
-        {
-          "expr": "stock_database_records_total",
-          "refId": "A"
-        }
-      ],
-      "fieldConfig": {
-        "defaults": {
-          "unit": "short"
-        }
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 16
-      }
-    },
+
     {
       "id": 6,
       "title": "API Success Rate",

@@ -2,6 +2,7 @@ package com.realtime.realtimedatapipeline.client;
 
 import com.realtime.realtimedatapipeline.config.FinnhubProperties;
 import com.realtime.realtimedatapipeline.model.FinnhubQuoteResponse;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -23,6 +24,7 @@ public class FinnhubApiClient {
     
     private final WebClient webClient;
     private final FinnhubProperties finnhubProperties;
+    private final MeterRegistry meterRegistry;
     
     // Simple counters
     private long requestCount = 0;
@@ -31,8 +33,13 @@ public class FinnhubApiClient {
     // Cache for stock company profiles (to get company names)
     private final Map<String, String> stockNameCache = new ConcurrentHashMap<>();
     
-    public FinnhubApiClient(FinnhubProperties finnhubProperties) {
+    public FinnhubApiClient(FinnhubProperties finnhubProperties, MeterRegistry meterRegistry) {
         this.finnhubProperties = finnhubProperties;
+        this.meterRegistry = meterRegistry;
+        
+        // Initialize metrics so they always exist in Prometheus even if 0
+        this.meterRegistry.counter("finnhub.api.success").increment(0);
+        this.meterRegistry.counter("finnhub.api.errors").increment(0);
         
         // Initialize WebClient with base configuration
         this.webClient = WebClient.builder()
@@ -66,16 +73,19 @@ public class FinnhubApiClient {
             
             if (response != null && response.getCurrentPrice() != null) {
                 logger.debug("Successfully fetched quote for {}: ${}", symbol, response.getCurrentPrice());
+                meterRegistry.counter("finnhub.api.success").increment();
                 return response;
             } else {
                 logger.warn("Received empty or invalid response for symbol: {}", symbol);
                 errorCount++;
+                meterRegistry.counter("finnhub.api.errors").increment();
                 return null;
             }
             
         } catch (Exception e) {
             logger.error("Error fetching stock quote for symbol {}: {}", symbol, e.getMessage());
             errorCount++;
+            meterRegistry.counter("finnhub.api.errors").increment();
             return null;
         }
     }

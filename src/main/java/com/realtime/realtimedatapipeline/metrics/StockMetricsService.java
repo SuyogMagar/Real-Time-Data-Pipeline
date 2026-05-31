@@ -38,7 +38,8 @@ public class StockMetricsService {
      * Register custom Prometheus gauges for stock metrics
      */
     private void registerCustomGauges() {
-        // Simple metrics registration - no complex gauges for now
+        // Initialize alert metric so it always exists in Prometheus
+        meterRegistry.counter("stock.price.alerts", "symbol", "none", "direction", "none").increment(0);
         logger.info("Stock metrics service initialized");
     }
     
@@ -98,7 +99,7 @@ public class StockMetricsService {
                 .register(meterRegistry));
         
         // Count significant price movements
-        meterRegistry.counter("stock.price.alerts.total",
+        meterRegistry.counter("stock.price.alerts",
                 "symbol", symbol,
                 "direction", priceChange > 0 ? "up" : "down")
                 .increment();
