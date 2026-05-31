@@ -23,7 +23,7 @@ How to Configure and Start the Project:
 3. Start the Main Application:
    - In your terminal, set your environment variables so the app can see them:
      export FINNHUB_API_KEY="your-api-key"
-   - Run the Spring Boot application:
+    - Run the Spring Boot application:
      ./mvnw spring-boot:run
      (If you are on Windows, use: .\mvnw.cmd spring-boot:run)
 

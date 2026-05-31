@@ -87,8 +87,8 @@
       "type": "timeseries",
       "targets": [
         {
-          "rawSql": "SELECT timestamp as time, symbol, current_price FROM stock_quotes WHERE $__timeFilter(timestamp) ORDER BY timestamp",
-          "format": "time_series",
+          "expr": "stock_price",
+          "legendFormat": "{{symbol}}",
           "refId": "A"
         }
       ],
@@ -272,42 +272,6 @@
         "w": 6,
         "x": 18,
         "y": 24
-      }
-    },
-    {
-      "id": 10,
-      "title": "Top Movers",
-      "type": "table",
-      "targets": [
-        {
-          "rawSql": "SELECT symbol, current_price, percent_change, change_amount FROM stock_quotes sq1 WHERE timestamp = (SELECT MAX(timestamp) FROM stock_quotes sq2 WHERE sq2.symbol = sq1.symbol) ORDER BY ABS(percent_change) DESC LIMIT 10",
-          "format": "table",
-          "refId": "A"
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 28
-      }
-    },
-    {
-      "id": 11,
-      "title": "Volume Leaders",
-      "type": "table",
-      "targets": [
-        {
-          "rawSql": "SELECT symbol, current_price, volume FROM stock_quotes sq1 WHERE timestamp = (SELECT MAX(timestamp) FROM stock_quotes sq2 WHERE sq2.symbol = sq1.symbol) ORDER BY volume DESC LIMIT 10",
-          "format": "table",
-          "refId": "A"
-        }
-      ],
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 12,
-        "y": 28
       }
     }
   ],
